@@ -35,9 +35,13 @@ def save_activities(activities):
 def record_activity(payload):
     """Store a request once and report whether it created a new activity."""
     activities = load_activities()
-    # reuse the first record when PrepTrack retries a request
+    source = payload.get("source", "unknown").casefold()
+    # reuse the first record when the same caller retries a request
     for activity in activities:
-        if activity.get("request_id") == payload["request_id"]:
+        if (
+            activity.get("source", "unknown").casefold() == source
+            and activity.get("request_id") == payload["request_id"]
+        ):
             return activity, False
     activity = {**payload, "id": str(uuid.uuid4())}
     activities.append(activity)

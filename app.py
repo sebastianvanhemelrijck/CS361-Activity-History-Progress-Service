@@ -33,9 +33,18 @@ def send_error(status, code, message):
 
 @app.after_request
 def allow_main_program(response):
-    allowed = os.environ.get("MAIN_PROGRAM_ORIGIN", "http://localhost:5173")
-    origin = request.headers.get("Origin")
-    if origin in {allowed, "http://127.0.0.1:5173"}:
+    configured = os.environ.get(
+        "MAIN_PROGRAM_ORIGINS",
+        os.environ.get(
+            "MAIN_PROGRAM_ORIGIN",
+            "http://localhost:5173,http://127.0.0.1:5173",
+        ),
+    )
+    allowed = {
+        value.strip().rstrip("/") for value in configured.split(",") if value.strip()
+    }
+    origin = (request.headers.get("Origin") or "").rstrip("/")
+    if origin in allowed:
         response.headers["Access-Control-Allow-Origin"] = origin
     response.headers["Access-Control-Allow-Headers"] = "Content-Type"
     response.headers["Access-Control-Allow-Methods"] = "GET,POST,OPTIONS"
@@ -100,7 +109,7 @@ def progress_summary():
     source = request.args.get("source", "").strip().casefold()
     activities = storage.load_activities()
     selected = []
-    # keep only records from this source and date range
+    # keep only records from the caller and date range
     for activity in activities:
         completed = parse_time(activity["completed_at"], "completed_at")
         if source and activity.get("source", "").casefold() != source:
