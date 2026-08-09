@@ -86,10 +86,3 @@ Run the automated tests with `python -m pytest -q`.
 
 - Record a completed activity.
 - View an activity and progress summary for a date range.
-
-## Remaining shared work
-None.
-Recording, persistence, caller-scoped idempotency, date-range summaries,
-validation, the exact 20-activity accuracy fixture, shared cross-program
-contract, deletion, export, streak calculations, and larger
-optional load fixtures have all been implemented.
