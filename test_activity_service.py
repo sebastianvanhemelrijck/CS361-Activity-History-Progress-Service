@@ -80,6 +80,33 @@ def test_progress_counts_a_date_range_by_type(client):
     assert response.json["by_activity_type"] == {"inventory": 2, "readiness": 1}
 
 
+def test_known_20_activity_history_returns_exact_counts(client):
+    completed_at = datetime.now(timezone.utc)
+
+    for index in range(20):
+        activity_type = "inventory" if index < 12 else "readiness"
+        payload = activity(f"known-{index}", activity_type)
+        payload["completed_at"] = completed_at.isoformat()
+        response = client.post("/activities", json=payload)
+        assert response.status_code == 201
+
+    response = client.get(
+        "/progress",
+        query_string={
+            "source": "PrepTrack",
+            "start": (completed_at - timedelta(minutes=1)).isoformat(),
+            "end": (completed_at + timedelta(minutes=1)).isoformat(),
+        },
+    )
+
+    assert response.status_code == 200
+    assert response.json["total_activities"] == 20
+    assert response.json["by_activity_type"] == {
+        "inventory": 12,
+        "readiness": 8,
+    }
+
+
 def test_configured_main_program_origin_is_allowed(client, monkeypatch):
     monkeypatch.setenv(
         "MAIN_PROGRAM_ORIGINS",
