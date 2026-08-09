@@ -4,6 +4,8 @@
 # Due Date: 8/10/26
 # Description: REST API for recording activity history and progress summaries
 
+import csv
+import io
 import os
 from collections import Counter
 from datetime import datetime, timezone
