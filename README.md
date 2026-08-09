@@ -13,6 +13,9 @@ The service uses a REST API with JSON at `http://127.0.0.1:5105` by default.
 | `POST /activities` | Record one completed activity idempotently |
 | `GET /activities?source={program}` | List one Main Program's recorded activities |
 | `GET /progress?source={program}&start=...&end=...` | Count that program's activities by type |
+| `DELETE /activities/{id}?source={program}` | Delete one activity, scoped to the caller's source |
+| `GET /export?source={program}&format=json|csv` | Export a program's activities as JSON or CSV |
+| `GET /streaks?source={program}&activity_type=...` | Return current/longest consecutive day streaks |
 
 Recording requires `request_id`, `name`, `activity_type`, and an ISO 8601
 `completed_at` value. Sending the same `request_id` twice returns the original
@@ -85,8 +88,8 @@ Run the automated tests with `python -m pytest -q`.
 - View an activity and progress summary for a date range.
 
 ## Remaining shared work
-
+None.
 Recording, persistence, caller-scoped idempotency, date-range summaries,
-validation, the exact 20-activity accuracy fixture, and the shared cross-program
-contract are implemented. Deletion, export, streak calculations, and larger
-optional load fixtures remain available for shared follow-up work.
+validation, the exact 20-activity accuracy fixture, shared cross-program
+contract, deletion, export, streak calculations, and larger
+optional load fixtures have all been implemented.
