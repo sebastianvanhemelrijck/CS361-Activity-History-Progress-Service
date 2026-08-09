@@ -1,4 +1,4 @@
-# Name: Sebastian Van Hemelrijck Noya
+# Name: Sebastian Van Hemelrijck Noya & Craig Harker
 # Course: CS361 - Software Engineering 1
 # Assignment: Assignment 9
 # Due Date: 8/10/26
@@ -47,3 +47,23 @@ def record_activity(payload):
     activities.append(activity)
     save_activities(activities)
     return activity, True
+
+
+def delete_activity(source, activity_id):
+    """Remove one activity scoped to its source. Returns True if removed."""
+    activities = load_activities()
+    source_cf = source.casefold()
+    remaining = []
+    removed = False
+    for activity in activities:
+        if (
+            not removed
+            and activity.get("id") == activity_id
+            and activity.get("source", "unknown").casefold() == source_cf
+        ):
+            removed = True
+            continue
+        remaining.append(activity)
+    if removed:
+        save_activities(remaining)
+    return removed
