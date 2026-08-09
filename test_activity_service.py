@@ -1,4 +1,4 @@
-# Name: Sebastian Van Hemelrijck Noya
+# Name: Sebastian Van Hemelrijck Noya & Craig Harker
 # Course: CS361 - Software Engineering 1
 # Assignment: Assignment 9
 # Due Date: 8/10/26
