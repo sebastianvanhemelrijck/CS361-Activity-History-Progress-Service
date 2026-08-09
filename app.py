@@ -95,6 +95,101 @@ def list_activities():
     activities.sort(key=lambda item: item["completed_at"], reverse=True)
     return jsonify({"count": len(activities), "activities": activities})
 
+@app.delete("/activities/<activity_id>")
+def delete_activity(activity_id):
+    source = request.args.get("source", "").strip()
+    if not source:
+        return send_error(
+            400, "INVALID_DELETE", "source is required to delete an activity."
+        )
+    removed = storage.delete_activity(source, activity_id)
+    if not removed:
+        return send_error(
+            404, "NOT_FOUND", "No activity with that id was found for that source."
+        )
+    return "", 204
+ 
+ 
+@app.get("/export")
+def export_activities():
+    source = request.args.get("source", "").strip().casefold()
+    export_format = request.args.get("format", "json").strip().casefold()
+ 
+    activities = storage.load_activities()
+    if source:
+        activities = [
+            item for item in activities if item.get("source", "").casefold() == source
+        ]
+    activities.sort(key=lambda item: item["completed_at"])
+ 
+    if export_format == "csv":
+        buffer = io.StringIO()
+        fieldnames = ["id", "source", "request_id", "name", "activity_type", "completed_at"]
+        writer = csv.DictWriter(buffer, fieldnames=fieldnames, extrasaction="ignore")
+        writer.writeheader()
+        writer.writerows(activities)
+        response = Response(buffer.getvalue(), mimetype="text/csv")
+        response.headers["Content-Disposition"] = "attachment; filename=activities.csv"
+        return response
+ 
+    if export_format != "json":
+        return send_error(
+            400, "INVALID_FORMAT", "format must be 'json' or 'csv'."
+        )
+ 
+    return jsonify({
+        "count": len(activities),
+        "exported_at": datetime.now(timezone.utc).isoformat(),
+        "activities": activities,
+    })
+ 
+ 
+@app.get("/streaks")
+def activity_streaks():
+    source = request.args.get("source", "").strip().casefold()
+    activity_type = request.args.get("activity_type", "").strip().casefold()
+ 
+    activities = storage.load_activities()
+    if source:
+        activities = [
+            item for item in activities if item.get("source", "").casefold() == source
+        ]
+    if activity_type:
+        activities = [
+            item
+            for item in activities
+            if item.get("activity_type", "").casefold() == activity_type
+        ]
+ 
+    # collapse to the distinct calendar days (UTC) that had activity
+    active_days = sorted({
+        parse_time(item["completed_at"], "completed_at").date() for item in activities
+    })
+ 
+    longest_streak = 0
+    running_streak = 0
+    previous_day = None
+    for day in active_days:
+        if previous_day is not None and (day - previous_day).days == 1:
+            running_streak += 1
+        else:
+            running_streak = 1
+        longest_streak = max(longest_streak, running_streak)
+        previous_day = day
+ 
+    today = datetime.now(timezone.utc).date()
+    if active_days and (today - active_days[-1]).days <= 1:
+        current_streak = running_streak
+    else:
+        current_streak = 0
+ 
+    return jsonify({
+        "total_active_days": len(active_days),
+        "current_streak": current_streak,
+        "longest_streak": longest_streak,
+        "last_active_day": active_days[-1].isoformat() if active_days else None,
+    })
+
 
 @app.get("/progress")
 def progress_summary():
